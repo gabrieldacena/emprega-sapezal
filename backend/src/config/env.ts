@@ -16,11 +16,15 @@ const envSchema = z.object({
     FRONTEND_URL: z.string().default('http://localhost:5173'),
 });
 
-const parsed = envSchema.safeParse(process.env);
+const result = envSchema.safeParse(process.env);
 
-if (!parsed.success) {
-    console.error('❌ Variáveis de ambiente inválidas:', parsed.error.flatten().fieldErrors);
+if (!result.success) {
+    console.error('❌ ERRO NAS VARIÁVEIS DE AMBIENTE:');
+    const errors = result.error.flatten().fieldErrors;
+    Object.entries(errors).forEach(([field, messages]) => {
+        console.error(`   - ${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`);
+    });
     process.exit(1);
 }
 
-export const env = parsed.data;
+export const env = result.data;

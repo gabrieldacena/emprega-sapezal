@@ -69,10 +69,11 @@ app.use(errorHandler);
 // ---- INICIAR SERVIDOR ----
 
 const PORT = parseInt(env.PORT);
+const HOST = '0.0.0.0';
 
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 Servidor rodando em http://${HOST}:${PORT}`);
+    console.log(`📊 Health check: http://${HOST}:${PORT}/api/health`);
     console.log(`🌍 Ambiente: ${env.NODE_ENV}`);
 });
 
