@@ -75,6 +75,12 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [msg, setMsg] = useState('');
 
+    // Actions helpers
+    const showMsg = useCallback((text: string) => {
+        setMsg(text);
+        setTimeout(() => setMsg(''), 4000);
+    }, []);
+
     // Filters
     const [userSearch, setUserSearch] = useState('');
     const [userType, setUserType] = useState('');
