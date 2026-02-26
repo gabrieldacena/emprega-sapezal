@@ -122,7 +122,7 @@ export function setTokenCookie(res: Response, token: string): void {
     res.cookie('token', token, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax', // Permite cross-domain no Render/Vercel
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
         path: '/',
     });
@@ -135,7 +135,7 @@ export function clearTokenCookie(res: Response): void {
     res.clearCookie('token', {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
         path: '/',
     });
 }

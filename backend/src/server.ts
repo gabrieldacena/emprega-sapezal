@@ -24,11 +24,15 @@ const app = express();
 app.use(cors({
     origin: (origin, callback) => {
         // Permitir local e a URL configurada (com ou sem barra final)
-        const allowed = [env.FRONTEND_URL, env.FRONTEND_URL.replace(/\/$/, '')];
+        const allowed = [
+            env.FRONTEND_URL,
+            env.FRONTEND_URL.replace(/\/$/, ''),
+            'https://emprega-sapezal.vercel.app',
+        ];
         if (!origin || allowed.includes(origin) || env.NODE_ENV === 'development') {
             callback(null, true);
         } else {
-            callback(new Error('Não permitido pelo CORS'));
+            callback(new Error(`Não permitido pelo CORS: ${origin}`));
         }
     },
     credentials: true,
