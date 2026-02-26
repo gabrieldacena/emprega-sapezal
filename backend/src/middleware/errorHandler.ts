@@ -52,10 +52,11 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
         }
     }
 
-    // Erro genérico — não expõe detalhes em produção
+    // Erro genérico
     res.status(500).json({
         success: false,
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Erro interno do servidor.',
+        message: err.message || 'Erro interno do servidor.', // Expor mensagem para debug
         code: 'INTERNAL_SERVER_ERROR',
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     });
 }
