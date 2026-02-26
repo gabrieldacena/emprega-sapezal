@@ -22,7 +22,15 @@ const app = express();
 // ---- MIDDLEWARE GLOBAL ----
 
 app.use(cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+        // Permitir local e a URL configurada (com ou sem barra final)
+        const allowed = [env.FRONTEND_URL, env.FRONTEND_URL.replace(/\/$/, '')];
+        if (!origin || allowed.includes(origin) || env.NODE_ENV === 'development') {
+            callback(null, true);
+        } else {
+            callback(new Error('Não permitido pelo CORS'));
+        }
+    },
     credentials: true,
 }));
 
