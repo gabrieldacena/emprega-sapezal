@@ -142,10 +142,10 @@ export class AdminController {
         try { sendSuccess(res, await adminService.createAd(req.body), 201); } catch (e) { next(e); }
     }
     async updateAd(req: Request, res: Response, next: NextFunction) {
-        try { sendSuccess(res, await adminService.updateAd(req.params.id, req.body)); } catch (e) { next(e); }
+        try { sendSuccess(res, await adminService.updateAd(req.params.id as string, req.body)); } catch (e) { next(e); }
     }
     async deleteAd(req: Request, res: Response, next: NextFunction) {
-        try { await adminService.deleteAd(req.params.id); sendSuccess(res, { message: 'Anúncio excluído.' }); } catch (e) { next(e); }
+        try { await adminService.deleteAd(req.params.id as string); sendSuccess(res, { message: 'Anúncio excluído.' }); } catch (e) { next(e); }
     }
 
     // ---- NOTÍCIAS ----
@@ -157,13 +157,13 @@ export class AdminController {
         try { sendSuccess(res, await adminService.createNews(req.body), 201); } catch (e) { next(e); }
     }
     async updateNews(req: Request, res: Response, next: NextFunction) {
-        try { sendSuccess(res, await adminService.updateNews(req.params.id, req.body)); } catch (e) { next(e); }
+        try { sendSuccess(res, await adminService.updateNews(req.params.id as string, req.body)); } catch (e) { next(e); }
     }
     async deleteNews(req: Request, res: Response, next: NextFunction) {
-        try { await adminService.deleteNews(req.params.id); sendSuccess(res, { message: 'Notícia excluída.' }); } catch (e) { next(e); }
+        try { await adminService.deleteNews(req.params.id as string); sendSuccess(res, { message: 'Notícia excluída.' }); } catch (e) { next(e); }
     }
     async setHeadline(req: Request, res: Response, next: NextFunction) {
-        try { sendSuccess(res, await adminService.setHeadline(req.params.id)); } catch (e) { next(e); }
+        try { sendSuccess(res, await adminService.setHeadline(req.params.id as string)); } catch (e) { next(e); }
     }
 
     // ---- CONFIGURAÇÕES ----
@@ -181,7 +181,7 @@ export class AdminController {
         } catch (e) { next(e); }
     }
     async deleteSetting(req: Request, res: Response, next: NextFunction) {
-        try { await adminService.deleteSetting(req.params.chave); sendSuccess(res, { message: 'Configuração removida.' }); } catch (e) { next(e); }
+        try { await adminService.deleteSetting(req.params.chave as string); sendSuccess(res, { message: 'Configuração removida.' }); } catch (e) { next(e); }
     }
 }
 
