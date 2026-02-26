@@ -1,0 +1,260 @@
+// ============================================================
+// Prisma Schema — Emprega Sapezal
+// Modelos: User, CandidateProfile, CompanyProfile, Job,
+//          JobApplication, Rental, RentalImage, ContactMessage
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---- ENUMS ----
+
+enum UserRole {
+  CANDIDATO
+  EMPRESA
+  ADMIN
+}
+
+enum ContractType {
+  CLT
+  PJ
+  ESTAGIO
+  TEMPORARIO
+  FREELANCER
+}
+
+enum WorkModel {
+  PRESENCIAL
+  HIBRIDO
+  REMOTO
+}
+
+enum JobStatus {
+  ATIVA
+  INATIVA
+  PENDENTE_APROVACAO
+  REPROVADA
+  OCULTA
+}
+
+enum ApplicationStatus {
+  ENVIADO
+  EM_ANALISE
+  APROVADO
+  REPROVADO
+}
+
+enum RentalStatus {
+  ATIVO
+  INATIVO
+  PENDENTE_APROVACAO
+  REPROVADO
+  OCULTO
+}
+
+enum PropertyType {
+  CASA
+  APARTAMENTO
+  SALA_COMERCIAL
+  KITNET
+  TERRENO
+  CHACARA
+  OUTRO
+}
+
+// ---- MODELOS ----
+
+model User {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senhaHash String   @map("senha_hash")
+  role      UserRole @default(CANDIDATO)
+  cidade    String?
+  estado    String?
+  telefone  String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  candidateProfile CandidateProfile?
+  companyProfile   CompanyProfile?
+
+  @@map("users")
+}
+
+model CandidateProfile {
+  id                  String  @id @default(uuid())
+  userId              String  @unique @map("user_id")
+  resumoProfissional  String? @map("resumo_profissional") @db.Text
+  linkCurriculo       String? @map("link_curriculo")
+  linkLinkedin        String? @map("link_linkedin")
+  areaInteresse       String? @map("area_interesse")
+  experienciaAnos     Int?    @map("experiencia_anos")
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@map("candidate_profiles")
+}
+
+model CompanyProfile {
+  id           String  @id @default(uuid())
+  userId       String  @unique @map("user_id")
+  nomeEmpresa  String  @map("nome_empresa")
+  cnpj         String?
+  areaAtuacao  String? @map("area_atuacao")
+  descricao    String? @db.Text
+  site         String?
+  whatsapp     String?
+  logoUrl      String? @map("logo_url")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs    Job[]
+  rentals Rental[]
+
+  @@map("company_profiles")
+}
+
+model Job {
+  id              String       @id @default(uuid())
+  companyId       String       @map("company_id")
+  titulo          String
+  descricao       String       @db.Text
+  requisitos      String?      @db.Text
+  beneficios      String?      @db.Text
+  tipoContrato    ContractType @map("tipo_contrato")
+  faixaSalarial   String?      @map("faixa_salarial")
+  modeloTrabalho  WorkModel    @map("modelo_trabalho")
+  cidade          String
+  estado          String
+  whatsapp        String?
+  linkExterno     String?      @map("link_externo")
+  status          JobStatus    @default(PENDENTE_APROVACAO)
+  destaque        Boolean      @default(false)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  company      CompanyProfile   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@map("jobs")
+}
+
+model JobApplication {
+  id          String            @id @default(uuid())
+  jobId       String            @map("job_id")
+  candidateId String            @map("candidate_id")
+  status      ApplicationStatus @default(ENVIADO)
+  mensagem    String?           @db.Text
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  job       Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, candidateId])
+  @@map("job_applications")
+}
+
+model Rental {
+  id             String       @id @default(uuid())
+  companyId      String       @map("company_id")
+  titulo         String
+  tipoImovel     PropertyType @map("tipo_imovel")
+  valorAluguel   Float        @map("valor_aluguel")
+  cidade         String
+  estado         String
+  descricao      String       @db.Text
+  whatsapp       String?
+  linkExterno    String?      @map("link_externo")
+  status         RentalStatus @default(PENDENTE_APROVACAO)
+  destaque       Boolean      @default(false)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  company  CompanyProfile   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  imagens  RentalImage[]
+  mensagens ContactMessage[]
+
+  @@map("rentals")
+}
+
+model RentalImage {
+  id       String @id @default(uuid())
+  rentalId String @map("rental_id")
+  url      String
+  ordem    Int    @default(0)
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@map("rental_images")
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  rentalId  String   @map("rental_id")
+  nome      String
+  email     String
+  telefone  String?
+  mensagem  String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  rental Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@map("contact_messages")
+}
+
+// ---- ANÚNCIOS LOCAIS ----
+
+enum AdPosition {
+  TOPO
+  ENTRE_SECOES
+  LATERAL
+  RODAPE
+}
+
+model Advertisement {
+  id        String     @id @default(uuid())
+  titulo    String
+  imagemUrl String     @map("imagem_url")
+  linkUrl   String?    @map("link_url")
+  posicao   AdPosition @default(ENTRE_SECOES)
+  ativo     Boolean    @default(true)
+  ordem     Int        @default(0)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@map("advertisements")
+}
+
+// ---- NOTÍCIAS ----
+
+model NewsArticle {
+  id                String   @id @default(uuid())
+  titulo            String
+  conteudo          String   @db.Text
+  imagemUrl         String?  @map("imagem_url")
+  destaquePrincipal Boolean  @default(false) @map("destaque_principal")
+  ativo             Boolean  @default(true)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("news_articles")
+}
+
+// ---- CONFIGURAÇÕES DO SITE ----
+
+model SiteSettings {
+  id          String   @id @default(uuid())
+  chave       String   @unique
+  valor       String
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
