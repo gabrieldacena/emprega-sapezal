@@ -109,13 +109,18 @@ export default function AdminDashboard() {
         try {
             const statsRes = await api.admin.dashboard();
             setStats(statsRes.data);
-        } catch { } finally { setLoading(false); }
+        } catch (err: any) {
+            console.error('Erro ao carregar dashboard stats:', err);
+            showMsg(`Erro carregando dashboard: ${err.message}`);
+        } finally { setLoading(false); }
         // Activity loads separately — doesn't block dashboard
         try {
             const actRes = await api.admin.activity();
             setActivity(actRes.data);
-        } catch { }
-    }, []);
+        } catch (err: any) {
+            console.error('Erro ao carregar atividade recente:', err);
+        }
+    }, [showMsg]);
 
     const loadUsers = useCallback(async () => {
         setLoading(true);
@@ -176,6 +181,7 @@ export default function AdminDashboard() {
 
     const handleTabChange = (t: AdminTab) => {
         setTab(t);
+        console.log(`Alterando aba para: ${t}`);
         if (t === 'dashboard') loadDashboard();
         else if (t === 'users') loadUsers();
         else if (t === 'jobs') loadJobs();
@@ -188,7 +194,7 @@ export default function AdminDashboard() {
     };
 
     // ---- ACTIONS ----
-    const showMsg = (text: string) => { setMsg(text); setTimeout(() => setMsg(''), 4000); };
+
 
     const handleToggleUser = async (id: string) => {
         try { await api.admin.toggleUser(id); loadUsers(); showMsg('Status do usuário atualizado. ✅'); } catch (err: any) { showMsg(err.message); }
@@ -255,7 +261,14 @@ export default function AdminDashboard() {
 
     // ---- SECTIONS ----
     const renderDashboard = () => {
-        if (!stats) return null;
+        if (loading && !stats) return <div className="loading"><div className="spinner" /> Carregando painel...</div>;
+        if (!stats) return (
+            <div className="empty-state">
+                <div className="icon">⚠️</div>
+                <p>Não foi possível carregar as estatísticas. Verifique sua conexão.</p>
+                <button className="btn btn-primary btn-sm" onClick={loadDashboard}>Tentar novamente</button>
+            </div>
+        );
         return (
             <>
                 <h2 className="admin-section-title">📊 Dashboard — Visão Geral</h2>
