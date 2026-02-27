@@ -12,6 +12,7 @@ const router = Router();
 router.use(authenticate, authorize('ADMIN'));
 
 // Dashboard
+router.get('/summary', adminController.summary);
 router.get('/dashboard', adminController.dashboard);
 router.get('/activity', adminController.recentActivity);
 

@@ -113,19 +113,13 @@ export default function AdminDashboard() {
     const loadDashboard = useCallback(async () => {
         setLoading(true);
         try {
-            const statsRes = await api.admin.dashboard();
-            setStats(statsRes.data);
+            const res = await api.admin.summary();
+            setStats(res.data.stats);
+            setActivity(res.data.activity);
         } catch (err: any) {
-            console.error('Erro ao carregar dashboard stats:', err);
+            console.error('Erro ao carregar resumo do dashboard:', err);
             showMsg(`Erro carregando dashboard: ${err.message}`);
         } finally { setLoading(false); }
-        // Activity loads separately — doesn't block dashboard
-        try {
-            const actRes = await api.admin.activity();
-            setActivity(actRes.data);
-        } catch (err: any) {
-            console.error('Erro ao carregar atividade recente:', err);
-        }
     }, [showMsg]);
 
     const loadUsers = useCallback(async () => {

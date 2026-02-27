@@ -100,6 +100,7 @@ export const api = {
 
     // ---- ADMIN ----
     admin: {
+        summary: () => request<ApiResponse<{ stats: DashboardStats; activity: RecentActivity }>>('/admin/summary'),
         dashboard: () => request<ApiResponse<DashboardStats>>('/admin/dashboard'),
         activity: () => request<ApiResponse<RecentActivity>>('/admin/activity'),
         users: (params?: string) => request<PaginatedResponse<User>>(`/admin/users${params ? `?${params}` : ''}`),

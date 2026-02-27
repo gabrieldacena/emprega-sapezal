@@ -7,6 +7,70 @@ import prisma from '../../config/database';
 import { AppError } from '../../utils/response';
 
 export class AdminService {
+    /** Resumo completo para o dashboard (Stats + Atividade) em uma única transação */
+    async getSummary() {
+        return prisma.$transaction(async (tx) => {
+            const stats = await Promise.all([
+                tx.user.count(),
+                tx.user.count({ where: { role: 'CANDIDATO' } }),
+                tx.user.count({ where: { role: 'EMPRESA' } }),
+                tx.job.count({ where: { status: 'ATIVA' } }),
+                tx.job.count({ where: { status: 'PENDENTE_APROVACAO' } }),
+                tx.job.count({ where: { status: 'REPROVADA' } }),
+                tx.job.count(),
+                tx.rental.count({ where: { status: 'ATIVO' } }),
+                tx.rental.count({ where: { status: 'PENDENTE_APROVACAO' } }),
+                tx.rental.count(),
+                tx.jobApplication.count(),
+                tx.jobApplication.count({ where: { status: 'EM_ANALISE' } }),
+                tx.contactMessage.count(),
+                tx.user.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
+            ]);
+
+            const [recentUsers, recentJobs, recentApplications] = await Promise.all([
+                tx.user.findMany({
+                    select: { id: true, nome: true, role: true, createdAt: true },
+                    orderBy: { createdAt: 'desc' },
+                    take: 8,
+                }),
+                tx.job.findMany({
+                    select: { id: true, titulo: true, status: true, createdAt: true, company: { select: { nomeEmpresa: true } } },
+                    orderBy: { createdAt: 'desc' },
+                    take: 8,
+                }),
+                tx.jobApplication.findMany({
+                    select: {
+                        id: true, status: true, createdAt: true,
+                        candidate: { select: { user: { select: { nome: true } } } },
+                        job: { select: { titulo: true } },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 8,
+                }),
+            ]);
+
+            return {
+                stats: {
+                    totalUsers: stats[0],
+                    totalCandidatos: stats[1],
+                    totalEmpresas: stats[2],
+                    vagasAtivas: stats[3],
+                    vagasPendentes: stats[4],
+                    vagasReprovadas: stats[5],
+                    totalVagas: stats[6],
+                    alugueisAtivos: stats[7],
+                    alugueisPendentes: stats[8],
+                    totalAlugueis: stats[9],
+                    totalCandidaturas: stats[10],
+                    candidaturasEmAnalise: stats[11],
+                    totalMensagens: stats[12],
+                    novosUsuarios7d: stats[13],
+                },
+                activity: { recentUsers, recentJobs, recentApplications }
+            };
+        });
+    }
+
     /** Dashboard com estatísticas completas */
     async getDashboard() {
         const stats = await prisma.$transaction([

@@ -7,6 +7,15 @@ import { adminService } from './admin.service';
 import { sendSuccess, sendPaginated } from '../../utils/response';
 
 export class AdminController {
+    async summary(_req: Request, res: Response, next: NextFunction) {
+        try {
+            const data = await adminService.getSummary();
+            sendSuccess(res, data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async dashboard(_req: Request, res: Response, next: NextFunction) {
         try {
             const stats = await adminService.getDashboard();
