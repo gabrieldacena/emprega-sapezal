@@ -3,22 +3,23 @@
 // ============================================================
 
 import { ApplicationStatus, JobStatus } from '@prisma/client';
-import prisma from '../../config/database';
+import prisma, { withRetry } from '../../config/database';
 import { AppError } from '../../utils/response';
 
 export class ApplicationsService {
     /** Candidatar-se a uma vaga */
     async apply(userId: string, jobId: string, mensagem?: string) {
         // Verifica se o candidato tem perfil
-        const candidate = await prisma.candidateProfile.findUnique({
+        const candidate = await withRetry(() => prisma.candidateProfile.findUnique({
             where: { userId },
-        });
+        }));
+
         if (!candidate) {
             throw new AppError('Perfil de candidato não encontrado.', 404);
         }
 
         // Verifica se a vaga existe e está ativa
-        const job = await prisma.job.findUnique({ where: { id: jobId } });
+        const job = await withRetry(() => prisma.job.findUnique({ where: { id: jobId } }));
         if (!job) {
             throw new AppError('Vaga não encontrada.', 404);
         }
@@ -27,9 +28,10 @@ export class ApplicationsService {
         }
 
         // Verifica duplicata
-        const existing = await prisma.jobApplication.findUnique({
+        const existing = await withRetry(() => prisma.jobApplication.findUnique({
             where: { jobId_candidateId: { jobId, candidateId: candidate.id } },
-        });
+        }));
+
         if (existing) {
             throw new AppError('Você já se candidatou a esta vaga.', 409);
         }

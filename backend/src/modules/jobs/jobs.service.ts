@@ -3,7 +3,7 @@
 // ============================================================
 
 import { JobStatus, Prisma } from '@prisma/client';
-import prisma from '../../config/database';
+import prisma, { withRetry } from '../../config/database';
 import { AppError } from '../../utils/response';
 
 interface CreateJobInput {
@@ -60,7 +60,7 @@ export class JobsService {
             ];
         }
 
-        const [jobs, total] = await Promise.all([
+        const [jobs, total] = await withRetry(() => Promise.all([
             prisma.job.findMany({
                 where,
                 include: {
@@ -71,14 +71,15 @@ export class JobsService {
                 take: limit,
             }),
             prisma.job.count({ where }),
-        ]);
+        ]));
+
 
         return { jobs, total, page, limit };
     }
 
     /** Detalhe de uma vaga */
     async getById(id: string) {
-        const job = await prisma.job.findUnique({
+        const job = await withRetry(() => prisma.job.findUnique({
             where: { id },
             include: {
                 company: {
@@ -93,7 +94,8 @@ export class JobsService {
                 },
                 _count: { select: { applications: true } },
             },
-        });
+        }));
+
 
         if (!job) {
             throw new AppError('Vaga não encontrada.', 404);

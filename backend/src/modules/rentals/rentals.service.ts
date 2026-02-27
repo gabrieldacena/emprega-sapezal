@@ -3,7 +3,7 @@
 // ============================================================
 
 import { RentalStatus, Prisma } from '@prisma/client';
-import prisma from '../../config/database';
+import prisma, { withRetry } from '../../config/database';
 import { AppError } from '../../utils/response';
 
 interface CreateRentalInput {
@@ -59,7 +59,7 @@ export class RentalsService {
             ];
         }
 
-        const [rentals, total] = await Promise.all([
+        const [rentals, total] = await withRetry(() => Promise.all([
             prisma.rental.findMany({
                 where,
                 include: {
@@ -71,14 +71,15 @@ export class RentalsService {
                 take: limit,
             }),
             prisma.rental.count({ where }),
-        ]);
+        ]));
+
 
         return { rentals, total, page, limit };
     }
 
     /** Detalhe de um anúncio */
     async getById(id: string) {
-        const rental = await prisma.rental.findUnique({
+        const rental = await withRetry(() => prisma.rental.findUnique({
             where: { id },
             include: {
                 company: {
@@ -93,7 +94,8 @@ export class RentalsService {
                 },
                 imagens: { orderBy: { ordem: 'asc' } },
             },
-        });
+        }));
+
 
         if (!rental) {
             throw new AppError('Anúncio não encontrado.', 404);
