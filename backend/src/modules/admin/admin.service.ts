@@ -9,22 +9,7 @@ import { AppError } from '../../utils/response';
 export class AdminService {
     /** Dashboard com estatísticas completas */
     async getDashboard() {
-        const [
-            totalUsers,
-            totalCandidatos,
-            totalEmpresas,
-            vagasAtivas,
-            vagasPendentes,
-            vagasReprovadas,
-            totalVagas,
-            alugueisAtivos,
-            alugueisPendentes,
-            totalAlugueis,
-            totalCandidaturas,
-            candidaturasEmAnalise,
-            totalMensagens,
-            novosUsuarios7d,
-        ] = await Promise.all([
+        const stats = await prisma.$transaction([
             prisma.user.count(),
             prisma.user.count({ where: { role: 'CANDIDATO' } }),
             prisma.user.count({ where: { role: 'EMPRESA' } }),
@@ -40,6 +25,23 @@ export class AdminService {
             prisma.contactMessage.count(),
             prisma.user.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
         ]);
+
+        const [
+            totalUsers,
+            totalCandidatos,
+            totalEmpresas,
+            vagasAtivas,
+            vagasPendentes,
+            vagasReprovadas,
+            totalVagas,
+            alugueisAtivos,
+            alugueisPendentes,
+            totalAlugueis,
+            totalCandidaturas,
+            candidaturasEmAnalise,
+            totalMensagens,
+            novosUsuarios7d,
+        ] = stats;
 
         return {
             totalUsers,
@@ -61,7 +63,7 @@ export class AdminService {
 
     /** Atividade recente — últimos registros de cada tipo */
     async getRecentActivity() {
-        const [recentUsers, recentJobs, recentApplications] = await Promise.all([
+        const [recentUsers, recentJobs, recentApplications] = await prisma.$transaction([
             prisma.user.findMany({
                 select: { id: true, nome: true, role: true, createdAt: true },
                 orderBy: { createdAt: 'desc' },
