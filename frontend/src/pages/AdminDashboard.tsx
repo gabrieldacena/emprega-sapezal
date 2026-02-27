@@ -110,6 +110,13 @@ export default function AdminDashboard() {
     const [stCorPrimariaLight, setStCorPrimariaLight] = useState('');
     const [stCorPrimariaDark, setStCorPrimariaDark] = useState('');
 
+    // Admin creation form
+    const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+    const [newAdminEmail, setNewAdminEmail] = useState('');
+    const [newAdminNome, setNewAdminNome] = useState('');
+    const [newAdminSenha, setNewAdminSenha] = useState('');
+    const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+
     const loadDashboard = useCallback(async () => {
         setLoading(true);
         try {
@@ -238,6 +245,26 @@ export default function AdminDashboard() {
         try { await api.admin.deleteMessage(id); loadMessages(); showMsg('Mensagem excluída. ✅'); } catch (err: any) { showMsg(err.message); }
     };
 
+    const handleCreateAdmin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newAdminEmail || !newAdminNome || !newAdminSenha) {
+            showMsg('⚠️ Preencha todos os campos do novo admin.');
+            return;
+        }
+        setIsCreatingAdmin(true);
+        try {
+            await api.admin.createAdmin({ email: newAdminEmail, nome: newAdminNome, senha: newAdminSenha });
+            showMsg('✅ Novo administrador criado com sucesso!');
+            setIsAdminModalOpen(false);
+            setNewAdminEmail(''); setNewAdminNome(''); setNewAdminSenha('');
+            loadUsers();
+        } catch (err: any) {
+            showMsg(`❌ Erro: ${err.message}`);
+        } finally {
+            setIsCreatingAdmin(false);
+        }
+    };
+
     // ---- RENDER HELPERS ----
     const renderStatCard = (label: string, value: number, icon: string, color: string) => (
         <div className="admin-stat-card" key={label}>
@@ -335,7 +362,35 @@ export default function AdminDashboard() {
 
     const renderUsers = () => (
         <>
-            <h2 className="admin-section-title">👥 Gestão de Usuários</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 className="admin-section-title" style={{ marginBottom: 0 }}>👥 Gestão de Usuários</h2>
+                <button className="btn btn-primary btn-sm" onClick={() => setIsAdminModalOpen(true)}>+ Novo Admin</button>
+            </div>
+            {isAdminModalOpen && (
+                <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem', border: '2px solid var(--primary)' }}>
+                    <h3 style={{ marginBottom: '1rem' }}>👑 Cadastrar Novo Administrador</h3>
+                    <form onSubmit={handleCreateAdmin} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '0.75rem', alignItems: 'end' }}>
+                        <div className="form-group">
+                            <label className="form-label">Nome</label>
+                            <input className="form-input" value={newAdminNome} onChange={e => setNewAdminNome(e.target.value)} placeholder="Ex: Admin Regional" />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">E-mail</label>
+                            <input className="form-input" type="email" value={newAdminEmail} onChange={e => setNewAdminEmail(e.target.value)} placeholder="admin@site.com" />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Senha</label>
+                            <input className="form-input" type="password" value={newAdminSenha} onChange={e => setNewAdminSenha(e.target.value)} placeholder="Senha forte" />
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button className="btn btn-primary" type="submit" disabled={isCreatingAdmin}>
+                                {isCreatingAdmin ? 'Criando...' : 'Confirmar'}
+                            </button>
+                            <button className="btn btn-ghost" type="button" onClick={() => setIsAdminModalOpen(false)}>Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            )}
             {renderFilters(
                 <>
                     <input

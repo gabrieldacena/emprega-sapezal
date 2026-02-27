@@ -16,6 +16,17 @@ export class AdminController {
         }
     }
 
+    /** Cria um novo administrador (apenas admins) */
+    async createAdmin(req: Request, res: Response, next: NextFunction) {
+        try {
+            const admin = await adminService.createAdmin(req.body);
+            sendSuccess(res, admin, 201);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /** Dashboard com estatísticas completas */
     async dashboard(_req: Request, res: Response, next: NextFunction) {
         try {
             const stats = await adminService.getDashboard();

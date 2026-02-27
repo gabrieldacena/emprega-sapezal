@@ -104,6 +104,7 @@ export const api = {
         dashboard: () => request<ApiResponse<DashboardStats>>('/admin/dashboard'),
         activity: () => request<ApiResponse<RecentActivity>>('/admin/activity'),
         users: (params?: string) => request<PaginatedResponse<User>>(`/admin/users${params ? `?${params}` : ''}`),
+        createAdmin: (data: any) => request<ApiResponse<User>>('/admin/admins', { method: 'POST', body: JSON.stringify(data) }),
         toggleUser: (id: string) => request<ApiResponse<any>>(`/admin/users/${id}/toggle`, { method: 'PATCH' }),
         deleteUser: (id: string) => request<ApiResponse<any>>(`/admin/users/${id}`, { method: 'DELETE' }),
         jobs: (params?: string) => request<PaginatedResponse<Job>>(`/admin/jobs${params ? `?${params}` : ''}`),

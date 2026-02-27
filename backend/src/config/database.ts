@@ -1,12 +1,24 @@
-// ============================================================
-// Instância compartilhada do Prisma Client
-// ============================================================
-
 import { PrismaClient } from '@prisma/client';
+import { env } from './env';
+
+// Helper para garantir parâmetros na DATABASE_URL
+const getBaseUrl = () => {
+    const url = env.DATABASE_URL;
+    const connector = url.includes('?') ? '&' : '?';
+    // Forçamos limites baixos de conexão para evitar exaustão no Render
+    // E garantimos que sslmode esteja presente se não estiver
+    const baseParams = 'connect_timeout=30&pool_timeout=30&connection_limit=3';
+    const sslParam = url.includes('sslmode') ? '' : '&sslmode=require';
+    return `${url}${connector}${baseParams}${sslParam}`;
+};
 
 const prisma = new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
-    datasourceUrl: process.env.DATABASE_URL + '&connect_timeout=30&pool_timeout=30',
+    log: env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+    datasources: {
+        db: {
+            url: getBaseUrl(),
+        },
+    },
 });
 
 /**

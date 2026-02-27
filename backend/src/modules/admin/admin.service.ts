@@ -2,9 +2,10 @@
 // Admin Service — Dashboard, moderação de usuários/vagas/aluguéis/candidaturas/mensagens
 // ============================================================
 
-import { JobStatus, RentalStatus } from '@prisma/client';
+import { JobStatus, RentalStatus, UserRole } from '@prisma/client';
 import prisma, { withRetry } from '../../config/database';
 import { AppError } from '../../utils/response';
+import bcrypt from 'bcryptjs';
 
 export class AdminService {
     /** Resumo completo para o dashboard (Stats + Atividade) em uma única transação */
@@ -203,6 +204,30 @@ export class AdminService {
             data: { ativo: !user.ativo },
             select: { id: true, nome: true, ativo: true },
         });
+    }
+
+    /** Cria um novo administrador */
+    async createAdmin(data: { email: string; nome: string; senha: string }) {
+        const existing = await withRetry(() => prisma.user.findUnique({ where: { email: data.email } }));
+        if (existing) {
+            throw new AppError('Este e-mail já está cadastrado.', 409, 'DUPLICATE_EMAIL');
+        }
+
+        const senhaHash = await bcrypt.hash(data.senha, 12);
+
+        const admin = await prisma.user.create({
+            data: {
+                email: data.email,
+                nome: data.nome,
+                senhaHash,
+                role: UserRole.ADMIN,
+                cidade: 'Sapezal',
+                estado: 'MT',
+            },
+            select: { id: true, nome: true, email: true, role: true, createdAt: true },
+        });
+
+        return admin;
     }
 
     /** Exclui um usuário permanentemente */

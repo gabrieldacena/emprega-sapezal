@@ -6,10 +6,9 @@
 //   npx tsx scripts/admin.ts listar
 // ============================================================
 
-import { PrismaClient, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
+import prisma from '../src/config/database';
 
 async function main() {
     const [, , acao, ...args] = process.argv;
