@@ -2,7 +2,7 @@
 // Users Service — Gerenciamento de perfil
 // ============================================================
 
-import prisma from '../../config/database';
+import prisma, { withRetry } from '../../config/database';
 import { AppError } from '../../utils/response';
 
 interface UpdateCandidateProfileInput {
@@ -33,13 +33,13 @@ interface UpdateCompanyProfileInput {
 export class UsersService {
     /** Obtém perfil completo */
     async getProfile(userId: string) {
-        const user = await prisma.user.findUnique({
+        const user = await withRetry(() => prisma.user.findUnique({
             where: { id: userId },
             include: {
                 candidateProfile: true,
                 companyProfile: true,
             },
-        });
+        }));
 
         if (!user) throw new AppError('Usuário não encontrado.', 404);
 
