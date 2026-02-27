@@ -24,8 +24,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const res = await api.auth.me();
             setUser(res.data);
-        } catch {
-            setUser(null);
+        } catch (err: any) {
+            // Só desloga se for erro real de autenticação (401)
+            // Se for erro de rede/timeout/500, mantém o estado atual para evitar logout fantasma
+            if (err.message?.includes('401') || err.status === 401) {
+                setUser(null);
+            }
         }
     }, []);
 

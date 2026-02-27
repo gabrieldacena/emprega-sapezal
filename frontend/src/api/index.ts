@@ -28,7 +28,9 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     }
 
     if (!res.ok) {
-        throw new Error(data.message || 'Erro na requisição');
+        const error: any = new Error(data.message || 'Erro na requisição');
+        error.status = res.status;
+        throw error;
     }
 
     return data;

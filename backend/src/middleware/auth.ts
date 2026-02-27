@@ -128,9 +128,6 @@ export function setTokenCookie(res: Response, token: string): void {
     });
 }
 
-/**
- * Remove o cookie do token (logout).
- */
 export function clearTokenCookie(res: Response): void {
     res.clearCookie('token', {
         httpOnly: true,
