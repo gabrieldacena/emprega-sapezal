@@ -4,7 +4,7 @@
 
 import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
-import prisma from '../../config/database';
+import prisma, { withRetry } from '../../config/database';
 import { AppError } from '../../utils/response';
 import { generateToken } from '../../middleware/auth';
 
@@ -37,7 +37,7 @@ interface LoginInput {
 export class AuthService {
     /** Registra um novo candidato */
     async registerCandidate(input: RegisterCandidateInput) {
-        const existing = await prisma.user.findUnique({ where: { email: input.email } });
+        const existing = await withRetry(() => prisma.user.findUnique({ where: { email: input.email } }));
         if (existing) {
             throw new AppError('Este e-mail já está cadastrado.', 409, 'DUPLICATE_EMAIL');
         }
@@ -143,14 +143,14 @@ export class AuthService {
     }
 
     /** Obtém dados do usuário logado */
-    async getMe(userId: string) {
-        const user = await prisma.user.findUnique({
+    async getProfile(userId: string) {
+        const user = await withRetry(() => prisma.user.findUnique({
             where: { id: userId },
             include: {
                 candidateProfile: true,
                 companyProfile: true,
             },
-        });
+        }));
 
         if (!user) {
             throw new AppError('Usuário não encontrado.', 404);

@@ -5,6 +5,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import prisma from './config/database';
 import { env } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -75,10 +76,26 @@ app.use(errorHandler);
 const PORT = parseInt(env.PORT);
 const HOST = '0.0.0.0';
 
-app.listen(PORT, HOST, () => {
-    console.log(`🚀 Servidor rodando em http://${HOST}:${PORT}`);
-    console.log(`📊 Health check: http://${HOST}:${PORT}/api/health`);
-    console.log(`🌍 Ambiente: ${env.NODE_ENV}`);
-});
+// Iniciar servidor com teste de conexão
+const startServer = async () => {
+    console.log(`[Server] Iniciando em modo ${env.NODE_ENV}...`);
+
+    try {
+        console.log('[Database] Testando conexão com Supabase...');
+        await prisma.$connect();
+        console.log('[Database] ✅ Conectado com sucesso!');
+    } catch (error: any) {
+        console.error('[Database] ❌ Erro crítico de conexão:', error.message);
+        console.log('[Database] O servidor tentará operar assim mesmo, buscando reconectar.');
+    }
+
+    app.listen(PORT, HOST, () => {
+        console.log(`[Server] 🚀 Rodando em http://${HOST}:${PORT}`);
+        console.log(`📊 Health check: http://${HOST}:${PORT}/api/health`);
+        console.log(`🌍 Ambiente: ${env.NODE_ENV}`);
+    });
+};
+
+startServer();
 
 export default app;
