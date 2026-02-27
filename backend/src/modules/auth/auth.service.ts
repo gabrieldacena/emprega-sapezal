@@ -143,7 +143,8 @@ export class AuthService {
     }
 
     /** Obtém dados do usuário logado */
-    async getProfile(userId: string) {
+    /** Obtém dados do usuário logado */
+    async getMe(userId: string) {
         const user = await withRetry(() => prisma.user.findUnique({
             where: { id: userId },
             include: {
