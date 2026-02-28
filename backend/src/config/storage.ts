@@ -5,7 +5,7 @@ if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     console.warn('⚠️ [Storage] SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes. Upload de imagens desativado.');
 }
 
-export const supabase = (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
+export const supabase = (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY && env.SUPABASE_URL.startsWith('http'))
     ? createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
         auth: { persistSession: false },
     })
