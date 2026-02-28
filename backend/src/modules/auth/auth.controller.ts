@@ -12,7 +12,7 @@ export class AuthController {
         try {
             const result = await authService.registerCandidate(req.body);
             setTokenCookie(res, result.token);
-            sendSuccess(res, result.user, 201);
+            sendSuccess(res, result);
         } catch (error) {
             next(error);
         }
@@ -22,7 +22,7 @@ export class AuthController {
         try {
             const result = await authService.registerCompany(req.body);
             setTokenCookie(res, result.token);
-            sendSuccess(res, result.user, 201);
+            sendSuccess(res, result);
         } catch (error) {
             next(error);
         }
@@ -32,7 +32,7 @@ export class AuthController {
         try {
             const result = await authService.login(req.body);
             setTokenCookie(res, result.token);
-            sendSuccess(res, result.user);
+            sendSuccess(res, result);
         } catch (error) {
             next(error);
         }

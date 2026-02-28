@@ -9,10 +9,20 @@ const BASE = import.meta.env.VITE_API_URL || '/api';
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
     let res: Response;
 
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(options?.headers as Record<string, string>),
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
         res = await fetch(`${BASE}${url}`, {
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json', ...options?.headers },
+            headers,
             ...options,
         });
     } catch {

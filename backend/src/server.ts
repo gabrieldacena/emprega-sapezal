@@ -20,6 +20,12 @@ import contentRoutes from './modules/content/content.routes';
 
 const app = express();
 
+// ---- LOG GLOBAL DE REQUISIÇÕES ----
+app.use((req, _res, next) => {
+    console.log(`[GlobalLog] ${req.method} ${req.url} | Origin: ${req.headers.origin} | Host: ${req.headers.host}`);
+    next();
+});
+
 // ---- MIDDLEWARE GLOBAL ----
 
 app.use(cors({

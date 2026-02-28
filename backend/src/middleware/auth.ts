@@ -35,9 +35,22 @@ interface JwtPayload {
  * O token é lido do cookie HTTP-only "token".
  */
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
-    const token = req.cookies?.token;
+    // 1. Tentar ler do cookie
+    let token = req.cookies?.token;
+
+    // 2. Tentar ler do Header Authorization (Bearer Token)
+    if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+
+    console.log(`[Auth] --- DEBUG REQUEST ---`);
+    console.log(`[Auth] URL: ${req.method} ${req.url}`);
+    console.log(`[Auth] Has Token: ${!!token}`);
+    console.log(`[Auth] Cookie Header: ${req.headers.cookie ? 'PRESENTE' : 'VAZIO'}`);
+    console.log(`[Auth] Auth Header: ${req.headers.authorization ? 'PRESENTE' : 'VAZIO'}`);
 
     if (!token) {
+        console.warn(`[Auth] ❌ Sem token para ${req.url}`);
         sendError(res, 'Autenticação necessária. Faça login para continuar.', 401);
         return;
     }
@@ -119,6 +132,7 @@ export function generateToken(payload: JwtPayload): string {
  * Define o cookie HTTP-only com o token JWT.
  */
 export function setTokenCookie(res: Response, token: string): void {
+    console.log('[Auth] 🍪 Definindo cookie de token...');
     res.cookie('token', token, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',

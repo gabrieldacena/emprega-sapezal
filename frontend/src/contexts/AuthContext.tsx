@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Só desloga se for erro real de autenticação (401)
             // Se for erro de rede/timeout/500, mantém o estado atual para evitar logout fantasma
             if (err.message?.includes('401') || err.status === 401) {
+                localStorage.removeItem('token');
                 setUser(null);
             }
         }
@@ -39,12 +40,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (email: string, senha: string) => {
         const res = await api.auth.login(email, senha);
-        setUser(res.data);
+        const data = res.data as any;
+        if (data?.token) {
+            localStorage.setItem('token', data.token);
+        }
+        setUser(data.user || data);
     };
 
     const logout = async () => {
-        await api.auth.logout();
-        setUser(null);
+        try {
+            await api.auth.logout();
+        } finally {
+            localStorage.removeItem('token');
+            setUser(null);
+        }
     };
 
     return (
