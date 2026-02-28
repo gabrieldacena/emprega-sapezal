@@ -72,7 +72,7 @@ export class AuthService {
 
     /** Registra uma nova empresa */
     async registerCompany(input: RegisterCompanyInput) {
-        const existing = await prisma.user.findUnique({ where: { email: input.email } });
+        const existing = await withRetry(() => prisma.user.findUnique({ where: { email: input.email } }));
         if (existing) {
             throw new AppError('Este e-mail já está cadastrado.', 409, 'DUPLICATE_EMAIL');
         }
@@ -111,13 +111,13 @@ export class AuthService {
 
     /** Login de qualquer tipo de usuário */
     async login(input: LoginInput) {
-        const user = await prisma.user.findUnique({
+        const user = await withRetry(() => prisma.user.findUnique({
             where: { email: input.email },
             include: {
                 candidateProfile: true,
                 companyProfile: true,
             },
-        });
+        }));
 
         if (!user) {
             throw new AppError('E-mail ou senha incorretos.', 401, 'INVALID_CREDENTIALS');

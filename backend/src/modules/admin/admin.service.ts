@@ -8,69 +8,69 @@ import { AppError } from '../../utils/response';
 import bcrypt from 'bcryptjs';
 
 export class AdminService {
-    /** Resumo completo para o dashboard (Stats + Atividade) em uma única transação */
+    /** Resumo completo para o dashboard (Stats + Atividade) */
     async getSummary() {
         return withRetry(async () => {
-            return prisma.$transaction(async (tx) => {
-                const stats = await Promise.all([
-                    tx.user.count(),
-                    tx.user.count({ where: { role: 'CANDIDATO' } }),
-                    tx.user.count({ where: { role: 'EMPRESA' } }),
-                    tx.job.count({ where: { status: 'ATIVA' } }),
-                    tx.job.count({ where: { status: 'PENDENTE_APROVACAO' } }),
-                    tx.job.count({ where: { status: 'REPROVADA' } }),
-                    tx.job.count(),
-                    tx.rental.count({ where: { status: 'ATIVO' } }),
-                    tx.rental.count({ where: { status: 'PENDENTE_APROVACAO' } }),
-                    tx.rental.count(),
-                    tx.jobApplication.count(),
-                    tx.jobApplication.count({ where: { status: 'EM_ANALISE' } }),
-                    tx.contactMessage.count(),
-                    tx.user.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
-                ]);
+            // 1. Contagens estatísticas em uma transação de array (mais segura)
+            const statsResults = await prisma.$transaction([
+                prisma.user.count(),
+                prisma.user.count({ where: { role: 'CANDIDATO' } }),
+                prisma.user.count({ where: { role: 'EMPRESA' } }),
+                prisma.job.count({ where: { status: 'ATIVA' } }),
+                prisma.job.count({ where: { status: 'PENDENTE_APROVACAO' } }),
+                prisma.job.count({ where: { status: 'REPROVADA' } }),
+                prisma.job.count(),
+                prisma.rental.count({ where: { status: 'ATIVO' } }),
+                prisma.rental.count({ where: { status: 'PENDENTE_APROVACAO' } }),
+                prisma.rental.count(),
+                prisma.jobApplication.count(),
+                prisma.jobApplication.count({ where: { status: 'EM_ANALISE' } }),
+                prisma.contactMessage.count(),
+                prisma.user.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
+            ]);
 
-                const [recentUsers, recentJobs, recentApplications] = await Promise.all([
-                    tx.user.findMany({
-                        select: { id: true, nome: true, role: true, createdAt: true },
-                        orderBy: { createdAt: 'desc' },
-                        take: 8,
-                    }),
-                    tx.job.findMany({
-                        select: { id: true, titulo: true, status: true, createdAt: true, company: { select: { nomeEmpresa: true } } },
-                        orderBy: { createdAt: 'desc' },
-                        take: 8,
-                    }),
-                    tx.jobApplication.findMany({
-                        select: {
-                            id: true, status: true, createdAt: true,
-                            candidate: { select: { user: { select: { nome: true } } } },
-                            job: { select: { titulo: true } },
-                        },
-                        orderBy: { createdAt: 'desc' },
-                        take: 8,
-                    }),
-                ]);
-
-                return {
-                    stats: {
-                        totalUsers: stats[0],
-                        totalCandidatos: stats[1],
-                        totalEmpresas: stats[2],
-                        vagasAtivas: stats[3],
-                        vagasPendentes: stats[4],
-                        vagasReprovadas: stats[5],
-                        totalVagas: stats[6],
-                        alugueisAtivos: stats[7],
-                        alugueisPendentes: stats[8],
-                        totalAlugueis: stats[9],
-                        totalCandidaturas: stats[10],
-                        candidaturasEmAnalise: stats[11],
-                        totalMensagens: stats[12],
-                        novosUsuarios7d: stats[13],
+            // 2. Atividade recente em paralelo (fora da transação para não segurar o lock)
+            const [recentUsers, recentJobs, recentApplications] = await Promise.all([
+                prisma.user.findMany({
+                    select: { id: true, nome: true, role: true, createdAt: true },
+                    orderBy: { createdAt: 'desc' },
+                    take: 8,
+                }),
+                prisma.job.findMany({
+                    select: { id: true, titulo: true, status: true, createdAt: true, company: { select: { nomeEmpresa: true } } },
+                    orderBy: { createdAt: 'desc' },
+                    take: 8,
+                }),
+                prisma.jobApplication.findMany({
+                    select: {
+                        id: true, status: true, createdAt: true,
+                        candidate: { select: { user: { select: { nome: true } } } },
+                        job: { select: { titulo: true } },
                     },
-                    activity: { recentUsers, recentJobs, recentApplications }
-                };
-            });
+                    orderBy: { createdAt: 'desc' },
+                    take: 8,
+                }),
+            ]);
+
+            return {
+                stats: {
+                    totalUsers: statsResults[0],
+                    totalCandidatos: statsResults[1],
+                    totalEmpresas: statsResults[2],
+                    vagasAtivas: statsResults[3],
+                    vagasPendentes: statsResults[4],
+                    vagasReprovadas: statsResults[5],
+                    totalVagas: statsResults[6],
+                    alugueisAtivos: statsResults[7],
+                    alugueisPendentes: statsResults[8],
+                    totalAlugueis: statsResults[9],
+                    totalCandidaturas: statsResults[10],
+                    candidaturasEmAnalise: statsResults[11],
+                    totalMensagens: statsResults[12],
+                    novosUsuarios7d: statsResults[13],
+                },
+                activity: { recentUsers, recentJobs, recentApplications }
+            };
         });
     }
 
