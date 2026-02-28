@@ -4,7 +4,9 @@
 
 import { Router } from 'express';
 import { adminController } from './admin.controller';
+import { uploadController } from './upload.controller';
 import { authenticate, authorize } from '../../middleware/auth';
+import { upload } from '../../middleware/upload';
 
 const router = Router();
 
@@ -29,8 +31,12 @@ router.delete('/jobs/:id', adminController.deleteJob);
 
 // Aluguéis
 router.get('/rentals', adminController.listRentals);
+router.post('/rentals', adminController.createRental);
 router.patch('/rentals/:id', adminController.moderateRental);
 router.delete('/rentals/:id', adminController.deleteRental);
+
+// Upload
+router.post('/upload', upload.single('image'), uploadController.uploadImage);
 
 // Candidaturas
 router.get('/applications', adminController.listApplications);

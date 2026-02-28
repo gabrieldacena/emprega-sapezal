@@ -107,6 +107,15 @@ export const api = {
         activity: () => request<ApiResponse<RecentActivity>>('/admin/activity'),
         users: (params?: string) => request<PaginatedResponse<User>>(`/admin/users${params ? `?${params}` : ''}`),
         createAdmin: (data: any) => request<ApiResponse<User>>('/admin/admins', { method: 'POST', body: JSON.stringify(data) }),
+        uploadImage: (image: File) => {
+            const formData = new FormData();
+            formData.append('image', image);
+            return request<ApiResponse<{ url: string; path: string }>>('/admin/upload', {
+                method: 'POST',
+                body: formData,
+            });
+        },
+        createRental: (data: any) => request<ApiResponse<Rental>>('/admin/rentals', { method: 'POST', body: JSON.stringify(data) }),
         toggleUser: (id: string) => request<ApiResponse<any>>(`/admin/users/${id}/toggle`, { method: 'PATCH' }),
         deleteUser: (id: string) => request<ApiResponse<any>>(`/admin/users/${id}`, { method: 'DELETE' }),
         jobs: (params?: string) => request<PaginatedResponse<Job>>(`/admin/jobs${params ? `?${params}` : ''}`),

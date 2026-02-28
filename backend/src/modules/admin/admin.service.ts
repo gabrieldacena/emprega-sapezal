@@ -361,6 +361,39 @@ export class AdminService {
         await prisma.rental.delete({ where: { id: rentalId } });
     }
 
+    /** Cria um anúncio de aluguel pelo Admin */
+    async createRental(data: any) {
+        // Obter uma empresa padrão para o admin ou a primeira empresa do sistema
+        let company = await prisma.companyProfile.findFirst({
+            where: { user: { role: 'ADMIN' } }
+        });
+
+        if (!company) {
+            company = await prisma.companyProfile.findFirst();
+        }
+
+        if (!company) {
+            throw new AppError('Nenhuma empresa encontrada para associar ao aluguel.', 400);
+        }
+
+        const { imagens, ...rentalData } = data;
+
+        return prisma.rental.create({
+            data: {
+                ...rentalData,
+                companyId: company.id,
+                status: 'ATIVO', // Admin cria já ativo
+                imagens: imagens ? {
+                    create: imagens.map((url: string, index: number) => ({
+                        url,
+                        ordem: index
+                    }))
+                } : undefined
+            },
+            include: { imagens: true }
+        });
+    }
+
     /** Lista todas as candidaturas */
     async listApplications(filters: { status?: string; busca?: string; page?: string; limit?: string }) {
         const page = parseInt(filters.page || '1');

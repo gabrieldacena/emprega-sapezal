@@ -1,0 +1,13 @@
+console.log('Teste de ambiente...');
+import { PrismaClient } from '@prisma/client';
+console.log('PrismaClient importado');
+const p = new PrismaClient();
+console.log('Instância criada');
+import express from 'express';
+console.log('Express importado');
+const app = express();
+app.get('/', (req, res) => res.send('OK'));
+console.log('App configurado');
+const count = await p.user.count();
+console.log('Sucesso! Usuários no banco:', count);
+process.exit(0);

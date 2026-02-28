@@ -126,6 +126,15 @@ export class AdminController {
         }
     }
 
+    async createRental(req: Request, res: Response, next: NextFunction) {
+        try {
+            const rental = await adminService.createRental(req.body);
+            sendSuccess(res, rental, 201);
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async listApplications(req: Request, res: Response, next: NextFunction) {
         try {
             const result = await adminService.listApplications(req.query as any);

@@ -14,6 +14,7 @@ export default function Home() {
     const [ads, setAds] = useState<Advertisement[]>([]);
     const [news, setNews] = useState<NewsArticle[]>([]);
     const [headline, setHeadline] = useState<NewsArticle | null>(null);
+    const [settings, setSettings] = useState<Record<string, string>>({});
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -22,7 +23,10 @@ export default function Home() {
         api.content.ads().then(res => setAds(res.data)).catch(() => { });
         api.content.news().then(res => setNews(res.data)).catch(() => { });
         api.content.headline().then(res => setHeadline(res.data)).catch(() => { });
+        api.content.settings().then(res => setSettings(res.data)).catch(() => { });
     }, []);
+
+    const showSearch = settings.show_search_bar !== 'false';
 
     const handleSearch = () => {
         if (searchTerm.trim()) {
@@ -75,16 +79,30 @@ export default function Home() {
             {headline && (
                 <section style={{
                     background: 'linear-gradient(135deg, #1a1d23 0%, #2d3748 100%)', color: 'white',
-                    padding: '1rem 0', borderBottom: '3px solid var(--accent)',
+                    padding: showSearch ? '1rem 0' : '2.5rem 0',
+                    borderBottom: '3px solid var(--accent)',
+                    textAlign: !showSearch ? 'center' : 'left'
                 }}>
-                    <div className="container" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div className="container" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        flexWrap: 'wrap',
+                        flexDirection: !showSearch ? 'column' : 'row'
+                    }}>
                         <span style={{ background: 'var(--danger)', padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             🔴 DESTAQUE
                         </span>
-                        <Link to={`/noticias/${headline.id}`} style={{ color: 'white', textDecoration: 'none', fontWeight: 600, fontSize: '1rem', flex: 1 }}>
+                        <Link to={`/noticias/${headline.id}`} style={{
+                            color: 'white',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            fontSize: !showSearch ? '1.5rem' : '1rem',
+                            flex: showSearch ? 1 : 'none'
+                        }}>
                             {headline.titulo}
                         </Link>
-                        <Link to={`/noticias/${headline.id}`} style={{ color: 'var(--accent)', fontSize: '0.85rem', textDecoration: 'none', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                        <Link to={`/noticias/${headline.id}`} style={{ color: 'var(--accent)', fontSize: '1rem', textDecoration: 'none', fontWeight: 500, whiteSpace: 'nowrap' }}>
                             Ler mais →
                         </Link>
                     </div>
@@ -95,19 +113,23 @@ export default function Home() {
             {renderAdSection(topoAds)}
 
             {/* ---- HERO ---- */}
-            <section className="hero">
+            <section className="hero" style={!showSearch ? { padding: '3rem 0', minHeight: 'auto' } : {}}>
                 <h1>Encontre Oportunidades em Sapezal</h1>
                 <p>Vagas de emprego e imóveis para alugar na região que mais cresce no Mato Grosso.</p>
-                <div className="search-bar">
-                    <input
-                        type="text"
-                        placeholder="Buscar vagas, cargos, empresas..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                    />
-                    <button onClick={handleSearch}>Buscar</button>
-                </div>
+
+                {showSearch && (
+                    <div className="search-bar">
+                        <input
+                            type="text"
+                            placeholder="Buscar vagas, cargos, empresas..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                        />
+                        <button onClick={handleSearch}>Buscar</button>
+                    </div>
+                )}
+
                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1.5rem', flexWrap: 'wrap' }}>
                     <Link to="/vagas" className="btn btn-secondary" style={{ borderColor: 'white', color: 'white' }}>
                         Ver Todas as Vagas

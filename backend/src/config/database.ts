@@ -7,7 +7,7 @@ const getBaseUrl = () => {
     const connector = url.includes('?') ? '&' : '?';
     // Forçamos limites baixos de conexão para evitar exaustão no Render
     // E garantimos que sslmode esteja presente se não estiver
-    const baseParams = 'connect_timeout=30&pool_timeout=30&connection_limit=3';
+    const baseParams = 'connect_timeout=60&pool_timeout=60&connection_limit=10';
     const sslParam = url.includes('sslmode') ? '' : '&sslmode=require';
     return `${url}${connector}${baseParams}${sslParam}`;
 };

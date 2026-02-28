@@ -117,6 +117,54 @@ export default function AdminDashboard() {
     const [newAdminSenha, setNewAdminSenha] = useState('');
     const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
 
+    // Rental form
+    const [isRentalModalOpen, setIsRentalModalOpen] = useState(false);
+    const [reTitulo, setReTitulo] = useState('');
+    const [reDescricao, setReDescricao] = useState('');
+    const [reValor, setReValor] = useState(0);
+    const [reTipo, setReTipo] = useState('CASA');
+    const [reQuartos, setReQuartos] = useState(1);
+    const [reBanheiros, setReBanheiros] = useState(1);
+    const [reArea, setReArea] = useState(0);
+    const [reVagas, setReVagas] = useState(0);
+    const [reEndereco, setReEndereco] = useState('');
+    const [reImagens, setReImagens] = useState<string[]>([]);
+    const [isCreatingRental, setIsCreatingRental] = useState(false);
+
+    // Image Upload Component
+    const ImageUpload = ({ onUpload, currentUrl, label }: { onUpload: (url: string) => void, currentUrl?: string, label?: string }) => {
+        const [uploading, setUploading] = useState(false);
+
+        const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            setUploading(true);
+            try {
+                const res = await api.admin.uploadImage(file);
+                onUpload(res.data.url);
+                showMsg('Imagem enviada com sucesso!');
+            } catch (err: any) {
+                showMsg(`Erro no upload: ${err.message}`);
+            } finally {
+                setUploading(false);
+            }
+        };
+
+        return (
+            <div className="form-group">
+                {label && <label>{label}</label>}
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    {currentUrl && (
+                        <img src={currentUrl} alt="Preview" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                    )}
+                    <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
+                    {uploading && <span>Enviando...</span>}
+                </div>
+            </div>
+        );
+    };
+
     const loadDashboard = useCallback(async () => {
         setLoading(true);
         try {
@@ -510,9 +558,110 @@ export default function AdminDashboard() {
         </>
     );
 
+    const handleSaveRental = async () => {
+        if (!reTitulo || !reValor) return showMsg('⚠️ Título e valor são obrigatórios.');
+        setIsCreatingRental(true);
+        try {
+            await api.admin.createRental({
+                titulo: reTitulo,
+                descricao: reDescricao,
+                valorAluguel: reValor,
+                tipoImovel: reTipo,
+                quartos: reQuartos,
+                banheiros: reBanheiros,
+                areaM2: reArea,
+                vagasGaragem: reVagas,
+                endereco: reEndereco,
+                cidade: 'Sapezal',
+                estado: 'MT',
+                imagens: reImagens
+            });
+            showMsg('✅ Aluguel criado com sucesso!');
+            setIsRentalModalOpen(false);
+            // Reset form
+            setReTitulo(''); setReDescricao(''); setReValor(0); setReImagens([]);
+            loadRentals();
+        } catch (err: any) {
+            showMsg(`❌ Erro: ${err.message}`);
+        } finally {
+            setIsCreatingRental(false);
+        }
+    };
+
     const renderRentals = () => (
         <>
-            <h2 className="admin-section-title">🏠 Gestão de Aluguéis</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 className="admin-section-title">🏠 Gestão de Aluguéis</h2>
+                <button className="btn btn-primary btn-sm" onClick={() => setIsRentalModalOpen(true)}>+ Novo Aluguel</button>
+            </div>
+            {/* Modal Novo Aluguel */}
+            {isRentalModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '700px' }}>
+                        <h3>Cadastrar Novo Imóvel</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label className="form-label">Título do Anúncio</label>
+                                <input type="text" className="form-input" value={reTitulo} onChange={e => setReTitulo(e.target.value)} placeholder="Ex: Casa 3 Quartos no Centro" />
+                            </div>
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label className="form-label">Descrição</label>
+                                <textarea className="form-input" value={reDescricao} onChange={e => setReDescricao(e.target.value)} rows={3} style={{ resize: 'vertical' }} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Valor do Aluguel (R$)</label>
+                                <input type="number" className="form-input" value={reValor} onChange={e => setReValor(Number(e.target.value))} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Tipo de Imóvel</label>
+                                <select className="form-input" value={reTipo} onChange={e => setReTipo(e.target.value)}>
+                                    <option value="CASA">Casa</option>
+                                    <option value="APARTAMENTO">Apartamento</option>
+                                    <option value="KITNET">Kitnet</option>
+                                    <option value="SALA_COMERCIAL">Sala Comercial</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Quartos</label>
+                                <input type="number" className="form-input" value={reQuartos} onChange={e => setReQuartos(Number(e.target.value))} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Banheiros</label>
+                                <input type="number" className="form-input" value={reBanheiros} onChange={e => setReBanheiros(Number(e.target.value))} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Área (m²)</label>
+                                <input type="number" className="form-input" value={reArea} onChange={e => setReArea(Number(e.target.value))} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Vagas Garagem</label>
+                                <input type="number" className="form-input" value={reVagas} onChange={e => setReVagas(Number(e.target.value))} />
+                            </div>
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label className="form-label">Endereço / Bairro</label>
+                                <input type="text" className="form-input" value={reEndereco} onChange={e => setReEndereco(e.target.value)} />
+                            </div>
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <ImageUpload label="Adicionar Imagem" onUpload={url => setReImagens([...reImagens, url])} />
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                                    {reImagens.map((url, i) => (
+                                        <div key={i} style={{ position: 'relative' }}>
+                                            <img src={url} alt="Envio" style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                                            <button onClick={() => setReImagens(reImagens.filter((_, idx) => idx !== i))} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', cursor: 'pointer' }}>×</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-ghost" onClick={() => setIsRentalModalOpen(false)}>Cancelar</button>
+                            <button className="btn btn-primary" onClick={handleSaveRental} disabled={isCreatingRental}>
+                                {isCreatingRental ? 'Criando...' : 'Criar Aluguel'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {renderFilters(
                 <>
                     <input
@@ -680,10 +829,7 @@ export default function AdminDashboard() {
                         <label className="form-label">Título</label>
                         <input className="form-input" value={adTitulo} onChange={e => setAdTitulo(e.target.value)} />
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">URL da Imagem</label>
-                        <input className="form-input" value={adImagem} onChange={e => setAdImagem(e.target.value)} placeholder="https://..." />
-                    </div>
+                    <ImageUpload label="Imagem do Anúncio" currentUrl={adImagem} onUpload={url => setAdImagem(url)} />
                     <div className="form-group">
                         <label className="form-label">Link (destino ao clicar)</label>
                         <input className="form-input" value={adLink} onChange={e => setAdLink(e.target.value)} placeholder="https://..." />
@@ -769,10 +915,7 @@ export default function AdminDashboard() {
                     <textarea className="form-input" value={nwConteudo} onChange={e => setNwConteudo(e.target.value)} rows={6} style={{ resize: 'vertical' }} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.75rem', alignItems: 'end' }}>
-                    <div className="form-group">
-                        <label className="form-label">URL da Imagem (opcional)</label>
-                        <input className="form-input" value={nwImagem} onChange={e => setNwImagem(e.target.value)} placeholder="https://..." />
-                    </div>
+                    <ImageUpload label="Imagem da Notícia (opcional)" currentUrl={nwImagem} onUpload={url => setNwImagem(url)} />
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '1rem' }}>
                         <input type="checkbox" checked={nwDestaque} onChange={e => setNwDestaque(e.target.checked)} />
                         <span style={{ fontSize: '0.9rem' }}>🔴 Destaque Principal</span>
@@ -857,6 +1000,25 @@ export default function AdminDashboard() {
                     <div className="form-group">
                         <input type="color" value={stCorPrimaria || '#1a7a4a'} onChange={e => setStCorPrimaria(e.target.value)} style={{ width: '40px', height: '38px', border: 'none', cursor: 'pointer' }} />
                     </div>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={siteSettings.show_search_bar !== 'false'} onChange={async (e) => {
+                            const newSettings = { ...siteSettings, show_search_bar: e.target.checked ? 'true' : 'false' };
+                            await api.admin.updateSettings({ show_search_bar: e.target.checked ? 'true' : 'false' });
+                            setSiteSettings(newSettings);
+                            showMsg('✅ Configuração de busca atualizada!');
+                        }} />
+                        <span style={{ fontWeight: 600 }}>Exibir Barra de Busca na Home</span>
+                    </label>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginLeft: '1.6rem' }}>
+                        Se desativado, a notícia em destaque ganhará mais visibilidade.
+                    </p>
+                </div>
+
+                <h3 style={{ marginTop: '2rem', marginBottom: '1.5rem' }}>Otras Configurações de Cores</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.75rem', alignItems: 'end' }}>
                     <div className="form-group">
                         <label className="form-label">Cor Primária Light</label>
                         <input className="form-input" value={stCorPrimariaLight} onChange={e => setStCorPrimariaLight(e.target.value)} placeholder="#2a9d63" />
